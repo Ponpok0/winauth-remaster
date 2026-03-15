@@ -1,0 +1,140 @@
+<Window x:Class="WinAuthRemaster.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{DynamicResource Settings_Title}" Width="450" Height="590"
+        Background="{DynamicResource BackgroundBrush}"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- 0: Title -->
+            <RowDefinition Height="Auto"/>  <!-- 1: Path label -->
+            <RowDefinition Height="Auto"/>  <!-- 2: Path input -->
+            <RowDefinition Height="Auto"/>  <!-- 3: Timeout label -->
+            <RowDefinition Height="Auto"/>  <!-- 4: Timeout input -->
+            <RowDefinition Height="Auto"/>  <!-- 5: Theme toggle -->
+            <RowDefinition Height="Auto"/>  <!-- 6: Language -->
+            <RowDefinition Height="Auto"/>  <!-- 7: Opacity label -->
+            <RowDefinition Height="Auto"/>  <!-- 8: Opacity slider -->
+            <RowDefinition Height="Auto"/>  <!-- 9: Hotkey label -->
+            <RowDefinition Height="Auto"/>  <!-- 10: Hotkey input -->
+            <RowDefinition Height="Auto"/>  <!-- 11: Data management buttons -->
+            <RowDefinition Height="*"/>     <!-- 12: Spacer -->
+            <RowDefinition Height="Auto"/>  <!-- 13: Save/Cancel -->
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{DynamicResource Settings_Title}"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
+                   FontSize="16" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+        <TextBlock Grid.Row="1" Text="{DynamicResource Settings_DataFile}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="12" Margin="0,0,0,4"/>
+
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="PathInput"
+                     Style="{StaticResource ModernTextBox}" Margin="0,0,8,0"
+                     IsReadOnly="True"/>
+            <Button Grid.Column="1" Content="{DynamicResource Btn_Browse}"
+                    Style="{StaticResource ModernButton}"
+                    Click="OnBrowse" Padding="8,6"/>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="{DynamicResource Settings_AutoLock}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="12" Margin="0,0,0,4"/>
+
+        <TextBox Grid.Row="4" x:Name="TimeoutInput"
+                 Style="{StaticResource ModernTextBox}" Width="80" MaxLength="4"
+                 HorizontalAlignment="Left" Margin="0,0,0,8"/>
+
+        <!-- テーマ切替 -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,8,0,8">
+            <TextBlock Text="{DynamicResource Settings_Theme}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <RadioButton x:Name="DarkModeRadio" Content="{DynamicResource Settings_Dark}" GroupName="Theme"
+                         IsChecked="True"
+                         Checked="OnThemeRadioChanged"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <RadioButton x:Name="LightModeRadio" Content="{DynamicResource Settings_Light}" GroupName="Theme"
+                         Checked="OnThemeRadioChanged"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- 言語 -->
+        <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="{DynamicResource Settings_Language}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <ComboBox x:Name="LanguageCombo" Width="160"
+                      SelectionChanged="OnLanguageChanged"/>
+        </StackPanel>
+
+        <!-- 透過度 -->
+        <TextBlock Grid.Row="7" Text="{DynamicResource Settings_Opacity}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="12" Margin="0,8,0,4"/>
+
+        <Grid Grid.Row="8" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Slider x:Name="OpacitySlider" Minimum="30" Maximum="100"
+                    TickFrequency="5" IsSnapToTickEnabled="True"
+                    ValueChanged="OnOpacitySliderChanged"/>
+            <TextBlock Grid.Column="1" x:Name="OpacityLabel"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       FontSize="12" VerticalAlignment="Center"
+                       Width="40" TextAlignment="Right" Margin="8,0,0,0"/>
+        </Grid>
+
+        <!-- ホットキー -->
+        <TextBlock Grid.Row="9" Text="{DynamicResource Settings_Hotkey}"
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   FontSize="12" Margin="0,8,0,4"/>
+
+        <Grid Grid.Row="10" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="HotkeyInput"
+                     Style="{StaticResource ModernTextBox}"
+                     IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                     InputMethod.IsInputMethodEnabled="False"
+                     GotKeyboardFocus="OnHotkeyGotFocus"
+                     LostKeyboardFocus="OnHotkeyLostFocus"
+                     Margin="0,0,8,0"/>
+            <Button Grid.Column="1" Content="{DynamicResource Settings_HotkeyClear}"
+                    Style="{StaticResource ModernButton}"
+                    Click="OnHotkeyClear" Padding="8,6"/>
+        </Grid>
+
+        <!-- データ管理 -->
+        <StackPanel Grid.Row="11" Orientation="Horizontal" Margin="0,0,0,8">
+            <Button Content="{DynamicResource Btn_Import}" Style="{StaticResource ModernButton}"
+                    Click="OnImportClick" Margin="0,0,8,0"/>
+            <Button Content="{DynamicResource Btn_Export}" Style="{StaticResource ModernButton}"
+                    Click="OnExportClick" Margin="0,0,8,0"/>
+            <Rectangle Width="1" Fill="{DynamicResource BorderBrush}" Margin="4,2"/>
+            <Button Content="{DynamicResource Btn_Password}" Style="{StaticResource ModernButton}"
+                    Click="OnChangePasswordClick" Margin="8,0,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="13" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="{DynamicResource Btn_Cancel}" Style="{StaticResource ModernButton}"
+                    Click="OnCancel" Margin="0,0,8,0" Width="80"/>
+            <Button Content="{DynamicResource Btn_Save}" Style="{StaticResource PrimaryButton}"
+                    Click="OnSave" Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

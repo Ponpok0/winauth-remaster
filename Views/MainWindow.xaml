@@ -1,0 +1,452 @@
+<Window x:Class="WinAuthRemaster.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:WinAuthRemaster.ViewModels"
+        xmlns:conv="clr-namespace:WinAuthRemaster.Converters"
+        Title="WinAuth" Width="394" Height="420" MinWidth="394" MaxWidth="394" MinHeight="300"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="CanResize"
+        Background="{DynamicResource BackgroundBrush}"
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/winauth.ico">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0"
+                      ResizeBorderThickness="0,0,0,6"
+                      GlassFrameThickness="0"
+                      CornerRadius="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <conv:CardColorToBrushConverter x:Key="CardColorToBrush"/>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" x:Name="Toolbar" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="8,6">
+            <DockPanel>
+                <!-- Close to tray (right end) -->
+                <Button DockPanel.Dock="Right"
+                        Click="OnCloseToTrayClick"
+                        Style="{StaticResource ModernButton}"
+                        Padding="6,4" ToolTip="{DynamicResource Tip_MinimizeToTray}" Margin="6,0,0,0">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Text="&#xE711;"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Button>
+
+                <!-- Pin toggle (right side) -->
+                <Button DockPanel.Dock="Right" x:Name="PinButton"
+                        Click="OnPinToggle"
+                        Style="{StaticResource ModernButton}"
+                        Padding="6,4" ToolTip="{DynamicResource Tip_AlwaysOnTop}" Margin="6,0,0,0">
+                    <TextBlock x:Name="PinIcon" FontFamily="Segoe MDL2 Assets"
+                               FontSize="14" Text="&#xE77A;"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Button>
+
+                <!-- Separator -->
+                <Rectangle DockPanel.Dock="Right" Width="1"
+                           Fill="{DynamicResource BorderBrush}" Margin="8,2"/>
+
+                <!-- Settings (gear) -->
+                <Button DockPanel.Dock="Right"
+                        Click="OnSettingsClick"
+                        Style="{StaticResource ModernButton}"
+                        Padding="6,4" ToolTip="{DynamicResource Tip_Settings}" Margin="6,0,0,0">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Text="&#xE713;"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Button>
+
+                <!-- Left side: Hamburger menu + Add -->
+                <StackPanel Orientation="Horizontal" ClipToBounds="True">
+                    <!-- ハンバーガーメニュー -->
+                    <Button x:Name="HamburgerButton"
+                            Style="{StaticResource ModernButton}"
+                            Click="OnHamburgerClick"
+                            Padding="8,4" ToolTip="{DynamicResource Tip_Menu}">
+                        <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                   Text="&#xE700;"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Button.ContextMenu>
+                            <ContextMenu Style="{StaticResource ThemedContextMenu}">
+                                <MenuItem Header="{DynamicResource Menu_New}" Click="OnMenuAddClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE710;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator Background="{DynamicResource BorderBrush}"/>
+                                <MenuItem Header="{DynamicResource Menu_Import}" Click="OnImportClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8B5;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource Menu_Export}" Click="OnExportClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEDE1;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator Background="{DynamicResource BorderBrush}"/>
+                                <MenuItem Header="{DynamicResource Menu_Password}" Click="OnChangePasswordClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE72E;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource Menu_Settings}" Click="OnSettingsClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE713;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator Background="{DynamicResource BorderBrush}"/>
+                                <MenuItem Header="{DynamicResource Menu_Close}" Click="OnCloseToTrayClick"
+                                          Style="{StaticResource ThemedMenuItem}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="12"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource Menu_Exit}" Click="OnExitClick"
+                                          Style="{StaticResource ThemedMenuItem}"
+                                          Foreground="{DynamicResource DangerBrush}">
+                                    <MenuItem.Icon>
+                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7E8;" FontSize="12"
+                                                   Foreground="{DynamicResource DangerBrush}"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+
+                    <Button Content="{DynamicResource Btn_Add}" Style="{StaticResource ModernButton}"
+                            Command="{Binding AddCommand}" Margin="4,0,0,0"/>
+
+                    <!-- フィルター -->
+                    <Grid Margin="6,0,0,0" Width="120">
+                        <TextBox x:Name="FilterBox"
+                                 Style="{StaticResource ModernTextBox}"
+                                 Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="12" Padding="20,3,4,3"
+                                 VerticalContentAlignment="Center"/>
+                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE721;"
+                                   FontSize="12" IsHitTestVisible="False"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center" Margin="5,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Authenticator List -->
+        <ScrollViewer Grid.Row="1" x:Name="MainScroll"
+                      VerticalScrollBarVisibility="Visible" Padding="8,0"
+                      PreviewMouseWheel="OnScrollViewerWheel">
+            <ScrollViewer.Resources>
+                <Style TargetType="ScrollBar" BasedOn="{StaticResource ThinScrollBar}"/>
+            </ScrollViewer.Resources>
+            <ItemsControl x:Name="AuthList" ItemsSource="{Binding EntriesView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:AuthenticatorItemViewModel}">
+                        <Grid Margin="0,3">
+                        <Border Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="7"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1">
+                            <Grid>
+                                <!-- カード色オーバーレイ（背景とコンテンツの間） -->
+                                <Border CornerRadius="6"
+                                        Background="{Binding CardColor, Converter={StaticResource CardColorToBrush}}"
+                                        IsHitTestVisible="False"/>
+                                <Grid Margin="9">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- ドラッグハンドル（カードホバーで出現、並び替え用） -->
+                                <Border Grid.RowSpan="2" Grid.Column="0"
+                                        Background="Transparent" Cursor="SizeAll"
+                                        Width="24" Margin="0,0,2,0" Tag="DragHandle">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Opacity" Value="0"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="⠿" FontSize="16"
+                                               Foreground="{DynamicResource PrimaryBrush}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               IsHitTestVisible="False"/>
+                                </Border>
+
+                                <!-- Name (上段左) -->
+                                <TextBlock Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4"
+                                           Text="{Binding Name}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontFamily="{StaticResource UIFont}"
+                                           FontSize="20" Margin="0,0,0,5"
+                                           TextTrimming="CharacterEllipsis"/>
+
+                                <!-- MoreActions (上段右、Copyと同じ列で右寄せ) -->
+                                <Button x:Name="MoreActionsButton"
+                                        Grid.Row="0" Grid.Column="5"
+                                        Style="{StaticResource ModernButton}"
+                                        HorizontalAlignment="Right"
+                                        Padding="6,2" ToolTip="{DynamicResource Tip_MoreActions}"
+                                        Click="OnMoreActionsClick"
+                                        Tag="{Binding}">
+                                    <TextBlock Text="&#xE712;" FontFamily="Segoe MDL2 Assets"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <Button.ContextMenu>
+                                        <ContextMenu Style="{StaticResource ThemedContextMenu}">
+                                            <!-- Color submenu -->
+                                            <MenuItem Header="{DynamicResource Menu_Color}"
+                                                      Style="{StaticResource ThemedMenuItem}">
+                                                <MenuItem.Icon>
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE790;" FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                </MenuItem.Icon>
+                                                <MenuItem Header="Red" Click="OnSetCardColorClick" Tag="#E74C3C" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#E74C3C" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Orange" Click="OnSetCardColorClick" Tag="#E67E22" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#E67E22" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Yellow" Click="OnSetCardColorClick" Tag="#F1C40F" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#F1C40F" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Green" Click="OnSetCardColorClick" Tag="#27AE60" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#27AE60" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Blue" Click="OnSetCardColorClick" Tag="#3498DB" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#3498DB" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Purple" Click="OnSetCardColorClick" Tag="#8E44AD" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#8E44AD" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Pink" Click="OnSetCardColorClick" Tag="#E91E63" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#E91E63" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Header="Teal" Click="OnSetCardColorClick" Tag="#00BCD4" Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon><Ellipse Fill="#00BCD4" Width="12" Height="12"/></MenuItem.Icon>
+                                                </MenuItem>
+                                                <Separator Background="{DynamicResource BorderBrush}"/>
+                                                <MenuItem Header="{DynamicResource Menu_ResetColor}"
+                                                          Click="OnSetCardColorClick" Tag=""
+                                                          Style="{StaticResource ThemedMenuItem}">
+                                                    <MenuItem.Icon>
+                                                        <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE894;" FontSize="12"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                            </MenuItem>
+                                            <MenuItem Header="{DynamicResource Menu_Rename}"
+                                                      Click="OnMenuRenameClick"
+                                                      Style="{StaticResource ThemedMenuItem}">
+                                                <MenuItem.Icon>
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8AC;" FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                            <Separator Background="{DynamicResource BorderBrush}"/>
+                                            <MenuItem Header="{DynamicResource Menu_Delete}"
+                                                      Click="OnMenuDeleteClick"
+                                                      Style="{StaticResource ThemedMenuItem}"
+                                                      Foreground="{DynamicResource DangerBrush}">
+                                                <MenuItem.Icon>
+                                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;" FontSize="12"
+                                                               Foreground="{DynamicResource DangerBrush}"/>
+                                                </MenuItem.Icon>
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Button.ContextMenu>
+                                </Button>
+
+                                <!-- Code (下段) -->
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding DisplayCode}"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontFamily="{StaticResource MonoFont}"
+                                           FontSize="25" FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+
+                                <!-- Eye toggle -->
+                                <Button Grid.Row="1" Grid.Column="2"
+                                        Style="{StaticResource SubtleButton}"
+                                        Command="{Binding DataContext.ToggleVisibilityCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        VerticalAlignment="Center" Margin="18,0"
+                                        Padding="5,4" ToolTip="{DynamicResource Tip_ShowHideCode}">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="13">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="&#xE7B3;"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsCodeVisible}" Value="True">
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Button>
+
+                                <!-- Countdown -->
+                                <Grid Grid.Row="1" Grid.Column="3"
+                                      Width="43" Height="43"
+                                      VerticalAlignment="Center" Margin="4,0,0,0">
+                                    <Ellipse Stroke="{DynamicResource BorderBrush}" StrokeThickness="3"
+                                             Fill="Transparent"/>
+                                    <TextBlock Text="{Binding RemainingSeconds}"
+                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                               FontSize="14" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontFamily="{StaticResource MonoFont}"/>
+                                </Grid>
+
+                                <!-- Copy Button -->
+                                <Button Grid.Row="1" Grid.Column="5"
+                                        Content="{DynamicResource Btn_Copy}" Style="{StaticResource CopyButton}"
+                                        Command="{Binding DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        Click="OnCopyButtonClick"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                        <!-- コピー時のカードフラッシュ用オーバーレイ -->
+                        <Border x:Name="cardFlash" Background="{DynamicResource PrimaryBrush}"
+                                CornerRadius="7" Opacity="0" IsHitTestVisible="False"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Empty State -->
+        <TextBlock Grid.Row="1"
+                   Text="{DynamicResource EmptyState}"
+                   Foreground="{DynamicResource TextMutedBrush}"
+                   FontSize="14" FontFamily="{StaticResource UIFont}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   TextWrapping="Wrap" Margin="24,0"
+                   Visibility="{Binding HasEntries, Converter={StaticResource InverseBoolToVis}}"/>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" x:Name="StatusBar" Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0"
+                Padding="12,4,4,4">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource ModernButton}"
+                        Click="OnExitClick" Padding="4,2" ToolTip="{DynamicResource Tip_Exit}">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
+                               Text="&#xE7E8;"
+                               Foreground="{DynamicResource DangerBrush}"/>
+                </Button>
+                <TextBlock x:Name="StatusText"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           FontSize="11" FontFamily="{StaticResource UIFont}"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Lock Screen（独立画面 — ロック時にメインコンテンツを隠して表示） -->
+        <Grid Grid.RowSpan="3" x:Name="LockScreen" Visibility="Collapsed"
+              Background="{DynamicResource BackgroundBrush}">
+            <!-- ☓ボタン（トレイ格納） — 右上 -->
+            <Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,8,8,0"
+                    Click="OnCloseToTrayClick"
+                    Style="{StaticResource ModernButton}"
+                    Padding="6,4" ToolTip="{DynamicResource Tip_MinimizeToTray}">
+                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                           Text="&#xE711;"
+                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+            </Button>
+
+            <!-- ロック解除UI — 中央 -->
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                        Width="300">
+                <TextBlock Text="{DynamicResource Lock_Title}"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           FontSize="28" FontWeight="Bold"
+                           FontFamily="{StaticResource UIFont}"
+                           HorizontalAlignment="Center" Margin="0,0,0,24"/>
+
+                <!-- Password unlock -->
+                <StackPanel x:Name="LockPasswordPanel" Visibility="Collapsed">
+                    <TextBlock Text="{DynamicResource Lock_EnterPassword}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               FontSize="12" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="LockPasswordInput"
+                                 Style="{StaticResource ModernPasswordBox}"
+                                 MaxLength="128" Margin="0,0,0,12"
+                                 KeyDown="OnLockPasswordKeyDown"/>
+                    <Button Content="{DynamicResource Btn_Unlock}" Style="{StaticResource PrimaryButton}"
+                            Click="OnUnlockClick" HorizontalAlignment="Center"
+                            Width="120"/>
+                </StackPanel>
+
+                <!-- Simple unlock (no password) -->
+                <Button x:Name="SimpleLockButton" Content="{DynamicResource Btn_ClickToUnlock}"
+                        Style="{StaticResource PrimaryButton}"
+                        Click="OnSimpleUnlockClick" HorizontalAlignment="Center"
+                        Width="160"/>
+
+                <TextBlock x:Name="LockErrorText"
+                           Foreground="{DynamicResource DangerBrush}"
+                           FontSize="12" HorizontalAlignment="Center"
+                           Margin="0,12,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+
+            <!-- 終了ボタン — 右下 -->
+            <Button HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Margin="0,0,8,8"
+                    Click="OnExitClick"
+                    Style="{StaticResource ModernButton}"
+                    Padding="4,2" ToolTip="{DynamicResource Tip_Exit}">
+                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="11"
+                           Text="&#xE7E8;"
+                           Foreground="{DynamicResource DangerBrush}"/>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>
