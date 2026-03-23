@@ -14,6 +14,8 @@ public partial class App : Application
 {
     private const string MUTEX_NAME = "WinAuthRemaster_SingleInstance";
     private const string PIPE_NAME = "WinAuthRemaster_Activate";
+    private const double MAIN_WINDOW_WIDTH = 394;
+    private const double MAIN_WINDOW_INITIAL_HEIGHT = 420;
     private static Mutex? _instanceMutex;
     private readonly GlobalHotkeyService _hotkeyService = new();
 
@@ -67,7 +69,11 @@ public partial class App : Application
             if (protection != ProtectionType.None &&
                 protection != ProtectionType.Dpapi)
             {
-                var dialog = new PasswordDialog(LocalizationService.Loc("PwTitle_WinAuth"), isSetMode: false);
+                bool hasHotkey = settings.HotkeyModifiers != null && settings.HotkeyKey != null;
+                var dialog = new PasswordDialog(LocalizationService.Loc("PwTitle_WinAuth"), isSetMode: false)
+                {
+                    CanHideToTray = hasHotkey
+                };
                 RestoreWindowPosition(dialog, settings);
 
                 // 最小化起動: PasswordDialog を最小化状態で表示
@@ -76,7 +82,8 @@ public partial class App : Application
                     dialog.SourceInitialized += (_, _) =>
                     {
                         dialog.WindowState = WindowState.Minimized;
-                        dialog.ShowInTaskbar = false;
+                        if (hasHotkey)
+                            dialog.ShowInTaskbar = false;
                     };
                 }
 
@@ -148,13 +155,15 @@ public partial class App : Application
 
         if (startMinimized)
         {
-            // タスクトレイに格納した状態で起動
-            window.WindowState = WindowState.Minimized;
-            window.ShowInTaskbar = false;
+            // SourceInitialized で最小化し、ウィンドウのフラッシュを防ぐ
+            window.SourceInitialized += (_, _) =>
+            {
+                window.WindowState = WindowState.Minimized;
+                window.ShowInTaskbar = false;
+            };
             window.Show();
             window.Hide();
-            // Minimized + Hide で不可視にしつつ HWND を確立する
-            // 以後は HideToTray/ShowFromTray で制御される
+            // Show → Hide で HWND を確立しつつ不可視にする
         }
         else
         {
@@ -169,8 +178,8 @@ public partial class App : Application
             return;
 
         // MainWindow とウィンドウサイズが異なる場合、中央を揃える
-        double offsetX = (394 - window.Width) / 2;   // MainWindow.Width = 394
-        double offsetY = (420 - window.Height) / 2;   // MainWindow の初期 Height
+        double offsetX = (MAIN_WINDOW_WIDTH - window.Width) / 2;
+        double offsetY = (MAIN_WINDOW_INITIAL_HEIGHT - window.Height) / 2;
         if (settings.WindowHeight is > 0 and double h)
             offsetY = (h - window.Height) / 2;
 

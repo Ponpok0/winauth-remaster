@@ -126,7 +126,8 @@ public partial class MainWindow : Window
     // ダイアログ側は MakeLocalBrushesOpaque で不透明に上書きして漏れを防ぐ
     internal static void ApplyTheme(bool isDark, double opacity)
     {
-        var res = Application.Current.Resources;
+        if (Application.Current is not { } app) return;
+        var res = app.Resources;
         byte alpha = (byte)(Math.Clamp(opacity, 0.3, 1.0) * 255);
 
         if (isDark)

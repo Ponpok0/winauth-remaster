@@ -13,6 +13,9 @@ public partial class PasswordDialog : Window
     private Func<SecureString, bool>? _authValidator;
     private UnlockCooldown? _cooldown;
 
+    /// <summary>ホットキーが設定済みならタスクバーからも非表示にできる。</summary>
+    public bool CanHideToTray { get; set; }
+
     public SecureString Password { get; private set; } = new();
 
     public PasswordDialog(string title, bool isSetMode)
@@ -100,7 +103,8 @@ public partial class PasswordDialog : Window
     private void OnMinimizeClick(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Minimized;
-        ShowInTaskbar = false;
+        if (CanHideToTray)
+            ShowInTaskbar = false;
     }
 
     private void OnExitClick(object sender, RoutedEventArgs e)
