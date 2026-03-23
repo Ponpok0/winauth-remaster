@@ -81,6 +81,7 @@
     <s:String x:Key="Settings_HotkeyHint">Pulse las teclas de atajo...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Error al registrar el atajo. Otra aplicación puede estar usando esta combinación.</s:String>
     <s:String x:Key="Settings_StartMinimized">Iniciar minimizado en la bandeja</s:String>
+    <s:String x:Key="Settings_StartWithWindows">Iniciar con Windows</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Agregar autenticador</s:String>

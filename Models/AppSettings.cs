@@ -20,4 +20,7 @@ public sealed class AppSettings
 
     // 起動時にタスクトレイに格納
     public bool StartMinimized { get; set; }
+
+    // Windows 起動時に自動起動
+    public bool StartWithWindows { get; set; }
 }

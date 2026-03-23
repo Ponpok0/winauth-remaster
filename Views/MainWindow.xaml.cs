@@ -481,8 +481,12 @@ public partial class MainWindow : Window
         // ホットキーの再登録
         bool hotkeyChanged = newSettings.HotkeyModifiers != _settings.HotkeyModifiers
                           || newSettings.HotkeyKey != _settings.HotkeyKey;
+        bool startupChanged = newSettings.StartWithWindows != _settings.StartWithWindows;
         _settings = newSettings;
         _settingsService.Save(newSettings);
+
+        if (startupChanged)
+            StartupService.SetEnabled(newSettings.StartWithWindows);
 
         if (hotkeyChanged)
         {

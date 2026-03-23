@@ -81,6 +81,7 @@
     <s:String x:Key="Settings_HotkeyHint">Нажмите сочетание клавиш...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Не удалось зарегистрировать горячую клавишу. Возможно, другое приложение использует это сочетание.</s:String>
     <s:String x:Key="Settings_StartMinimized">Запускать свёрнутым в трей</s:String>
+    <s:String x:Key="Settings_StartWithWindows">Запускать при старте Windows</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Добавить аутентификатор</s:String>

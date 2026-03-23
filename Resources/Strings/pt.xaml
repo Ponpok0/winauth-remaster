@@ -81,6 +81,7 @@
     <s:String x:Key="Settings_HotkeyHint">Pressione as teclas de atalho...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Falha ao registrar o atalho. Outro aplicativo pode estar usando esta combinação.</s:String>
     <s:String x:Key="Settings_StartMinimized">Iniciar minimizado na bandeja</s:String>
+    <s:String x:Key="Settings_StartWithWindows">Iniciar com o Windows</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Adicionar autenticador</s:String>

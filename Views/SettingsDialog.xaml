@@ -20,9 +20,10 @@
             <RowDefinition Height="Auto"/>  <!-- 9: Hotkey label -->
             <RowDefinition Height="Auto"/>  <!-- 10: Hotkey input -->
             <RowDefinition Height="Auto"/>  <!-- 11: Start minimized -->
-            <RowDefinition Height="Auto"/>  <!-- 12: Data management buttons -->
-            <RowDefinition Height="*"/>     <!-- 13: Spacer -->
-            <RowDefinition Height="Auto"/>  <!-- 14: Save/Cancel -->
+            <RowDefinition Height="Auto"/>  <!-- 12: Start with Windows -->
+            <RowDefinition Height="Auto"/>  <!-- 13: Data management buttons -->
+            <RowDefinition Height="*"/>     <!-- 14: Spacer -->
+            <RowDefinition Height="Auto"/>  <!-- 15: Save/Cancel -->
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="{DynamicResource Settings_Title}"
@@ -126,8 +127,14 @@
                   Foreground="{DynamicResource TextPrimaryBrush}"
                   Margin="0,4,0,8"/>
 
+        <!-- Windows 起動時に自動起動 -->
+        <CheckBox Grid.Row="12" x:Name="StartWithWindowsCheck"
+                  Content="{DynamicResource Settings_StartWithWindows}"
+                  Foreground="{DynamicResource TextPrimaryBrush}"
+                  Margin="0,4,0,8"/>
+
         <!-- データ管理 -->
-        <StackPanel Grid.Row="12" Orientation="Horizontal" Margin="0,0,0,8">
+        <StackPanel Grid.Row="13" Orientation="Horizontal" Margin="0,0,0,8">
             <Button Content="{DynamicResource Btn_Import}" Style="{StaticResource ModernButton}"
                     Click="OnImportClick" Margin="0,0,8,0"/>
             <Button Content="{DynamicResource Btn_Export}" Style="{StaticResource ModernButton}"
@@ -137,7 +144,7 @@
                     Click="OnChangePasswordClick" Margin="8,0,0,0"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="14" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="15" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="{DynamicResource Btn_Cancel}" Style="{StaticResource ModernButton}"
                     Click="OnCancel" Margin="0,0,8,0" Width="80"/>
             <Button Content="{DynamicResource Btn_Save}" Style="{StaticResource PrimaryButton}"
