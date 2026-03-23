@@ -67,8 +67,8 @@ public partial class MainWindow : Window
 
         InitDragReorder();
         SetupTrayIcon();
-        UpdateLockUI(viewModel.IsLocked);
         ApplyTheme(settings.IsDarkMode, settings.WindowOpacity);
+        UpdateLockUI(viewModel.IsLocked);
         RestoreWindowState(settings);
 
         // ホットキーのトグル先を MainWindow に設定（登録自体は App で完了済み）
@@ -124,7 +124,7 @@ public partial class MainWindow : Window
     // テーマとOpacityを一括適用（Application レベルに設定）
     // Background/Surface/SurfaceHover はアルファで透過。テキスト系は不透明
     // ダイアログ側は MakeLocalBrushesOpaque で不透明に上書きして漏れを防ぐ
-    private void ApplyTheme(bool isDark, double opacity)
+    internal static void ApplyTheme(bool isDark, double opacity)
     {
         var res = Application.Current.Resources;
         byte alpha = (byte)(Math.Clamp(opacity, 0.3, 1.0) * 255);
@@ -373,15 +373,6 @@ public partial class MainWindow : Window
         MainScroll.Visibility = mainVis;
         StatusBar.Visibility = mainVis;
         LockScreen.Visibility = isLocked ? Visibility.Visible : Visibility.Collapsed;
-
-        // ロック画面は常に不透明（ウィンドウ透過度に依存しない）
-        if (isLocked)
-        {
-            bool isDark = _settings.IsDarkMode;
-            LockScreen.Background = new SolidColorBrush(isDark
-                ? Color.FromRgb(0x1E, 0x1E, 0x2E)
-                : Color.FromRgb(0xEF, 0xF1, 0xF5));
-        }
 
         if (!isLocked)
         {

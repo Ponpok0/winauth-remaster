@@ -1,8 +1,8 @@
 using System.Security;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using WinAuthRemaster.Crypto;
-using WinAuthRemaster.Extensions;
 using static WinAuthRemaster.Services.LocalizationService;
 
 namespace WinAuthRemaster.Views;
@@ -26,8 +26,8 @@ public partial class PasswordDialog : Window
         else
             CancelButton.Visibility = Visibility.Collapsed;
 
-        // 透過がダイアログに漏れないようローカルで不透明に上書き
-        this.MakeLocalBrushesOpaque();
+        // ボタン等以外の領域でドラッグ移動
+        PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
 
         PasswordInput.Focus();
     }
@@ -97,8 +97,33 @@ public partial class PasswordDialog : Window
         DialogResult = false;
     }
 
+    private void OnMinimizeClick(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+        ShowInTaskbar = false;
+    }
+
     private void OnExitClick(object sender, RoutedEventArgs e)
     {
         DialogResult = false;
+    }
+
+    private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source) return;
+
+        // ボタン・テキストボックス等のインタラクティブ要素はスキップ
+        var current = source;
+        while (current != null)
+        {
+            if (current is System.Windows.Controls.Primitives.ButtonBase
+                or System.Windows.Controls.TextBox
+                or System.Windows.Controls.PasswordBox)
+                return;
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        try { DragMove(); }
+        catch (InvalidOperationException) { }
     }
 }

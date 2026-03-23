@@ -43,6 +43,7 @@ public partial class App : Application
         var settingsService = new SettingsService();
         var settings = settingsService.Load();
         LocalizationService.ApplyLanguage(settings.Language);
+        Views.MainWindow.ApplyTheme(settings.IsDarkMode, settings.WindowOpacity);
 
         // グローバルホットキーを早期登録（PasswordDialog 表示中も有効にする）
         _hotkeyService.Initialize();
@@ -67,6 +68,7 @@ public partial class App : Application
                 protection != ProtectionType.Dpapi)
             {
                 var dialog = new PasswordDialog(LocalizationService.Loc("PwTitle_WinAuth"), isSetMode: false);
+                RestoreWindowPosition(dialog, settings);
 
                 // 最小化起動: PasswordDialog を最小化状態で表示
                 if (startMinimized)
@@ -157,6 +159,35 @@ public partial class App : Application
         else
         {
             window.Show();
+        }
+    }
+
+    // 保存済みのウィンドウ位置を復元（PasswordDialog 等、MainWindow 以外にも適用）
+    private static void RestoreWindowPosition(Window window, AppSettings settings)
+    {
+        if (settings.WindowTop is not double top || settings.WindowLeft is not double left)
+            return;
+
+        // MainWindow とウィンドウサイズが異なる場合、中央を揃える
+        double offsetX = (394 - window.Width) / 2;   // MainWindow.Width = 394
+        double offsetY = (420 - window.Height) / 2;   // MainWindow の初期 Height
+        if (settings.WindowHeight is > 0 and double h)
+            offsetY = (h - window.Height) / 2;
+
+        double x = left + offsetX;
+        double y = top + offsetY;
+
+        bool isVisible =
+            x + window.Width > SystemParameters.VirtualScreenLeft + 50 &&
+            x < SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth - 50 &&
+            y > SystemParameters.VirtualScreenTop - 10 &&
+            y < SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight - 50;
+
+        if (isVisible)
+        {
+            window.WindowStartupLocation = WindowStartupLocation.Manual;
+            window.Top = y;
+            window.Left = x;
         }
     }
 
