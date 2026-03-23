@@ -17,4 +17,7 @@ public sealed class AppSettings
     // グローバルホットキー（null = 未設定）
     public int? HotkeyModifiers { get; set; }
     public int? HotkeyKey { get; set; }
+
+    // 起動時にタスクトレイに格納
+    public bool StartMinimized { get; set; }
 }

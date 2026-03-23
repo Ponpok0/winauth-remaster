@@ -5,7 +5,8 @@ namespace WinAuthRemaster.Services;
 
 /// <summary>
 /// Win32 RegisterHotKey/UnregisterHotKey を使ったグローバルホットキーサービス。
-/// WM_HOTKEY を受信したら Toggled コールバックを発火する。
+/// スレッドのメッセージループから直接 WM_HOTKEY を捕捉するため、
+/// フォーカス中のコントロールやウィンドウ状態に依存しない。
 /// </summary>
 public sealed class GlobalHotkeyService : IDisposable
 {
@@ -19,52 +20,53 @@ public sealed class GlobalHotkeyService : IDisposable
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-    private IntPtr _hwnd;
-    private HwndSource? _source;
     private bool _isRegistered;
+    private bool _isHooked;
 
     public Action? Toggled { get; set; }
 
-    /// <summary>ウィンドウハンドルを渡してメッセージフックを設定する。</summary>
-    public void Initialize(IntPtr hwnd)
+    /// <summary>スレッドメッセージフックを設定する。</summary>
+    public void Initialize()
     {
-        _hwnd = hwnd;
-        _source = HwndSource.FromHwnd(hwnd);
-        _source?.AddHook(WndProc);
+        if (_isHooked) return;
+        ComponentDispatcher.ThreadPreprocessMessage += OnThreadMessage;
+        _isHooked = true;
     }
 
     /// <summary>ホットキーを登録する。既に登録済みなら先に解除する。</summary>
     public bool Register(int modifiers, int vk)
     {
-        if (_hwnd == IntPtr.Zero) return false;
         Unregister();
         uint mods = (uint)modifiers | MOD_NOREPEAT;
-        _isRegistered = RegisterHotKey(_hwnd, HOTKEY_ID, mods, (uint)vk);
+        // hWnd=IntPtr.Zero: スレッドのメッセージキューに WM_HOTKEY が投函される
+        _isRegistered = RegisterHotKey(IntPtr.Zero, HOTKEY_ID, mods, (uint)vk);
         return _isRegistered;
     }
 
     /// <summary>登録済みホットキーを解除する。</summary>
     public void Unregister()
     {
-        if (!_isRegistered || _hwnd == IntPtr.Zero) return;
-        UnregisterHotKey(_hwnd, HOTKEY_ID);
+        if (!_isRegistered) return;
+        UnregisterHotKey(IntPtr.Zero, HOTKEY_ID);
         _isRegistered = false;
     }
 
     public void Dispose()
     {
         Unregister();
-        _source?.RemoveHook(WndProc);
-        _source = null;
+        if (_isHooked)
+        {
+            ComponentDispatcher.ThreadPreprocessMessage -= OnThreadMessage;
+            _isHooked = false;
+        }
     }
 
-    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private void OnThreadMessage(ref MSG msg, ref bool handled)
     {
-        if (msg == WM_HOTKEY && wParam.ToInt32() == HOTKEY_ID)
+        if (msg.message == WM_HOTKEY && (int)msg.wParam == HOTKEY_ID)
         {
             Toggled?.Invoke();
             handled = true;
         }
-        return IntPtr.Zero;
     }
 }

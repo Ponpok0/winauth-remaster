@@ -34,15 +34,17 @@ public partial class MainWindow : Window
     // パスワード試行のブルートフォース対策
     private UnlockCooldown? _unlockCooldown;
 
-    // グローバルホットキー
-    private readonly GlobalHotkeyService _hotkeyService = new();
+    // グローバルホットキー（App から注入）
+    private readonly GlobalHotkeyService _hotkeyService;
 
-    public MainWindow(MainViewModel viewModel, SettingsService settingsService, AppSettings settings)
+    public MainWindow(MainViewModel viewModel, SettingsService settingsService, AppSettings settings,
+                      GlobalHotkeyService hotkeyService)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _settingsService = settingsService;
         _settings = settings;
+        _hotkeyService = hotkeyService;
         DataContext = viewModel;
 
         _statusClearTimer.Tick += (_, _) => { _statusClearTimer.Stop(); StatusText.Text = ""; };
@@ -69,15 +71,8 @@ public partial class MainWindow : Window
         ApplyTheme(settings.IsDarkMode, settings.WindowOpacity);
         RestoreWindowState(settings);
 
-        // ウィンドウハンドル確定後にホットキーを登録
-        SourceInitialized += (_, _) =>
-        {
-            var hwnd = new WindowInteropHelper(this).Handle;
-            _hotkeyService.Toggled = OnHotkeyToggle;
-            _hotkeyService.Initialize(hwnd);
-            if (settings.HotkeyModifiers != null && settings.HotkeyKey != null)
-                _hotkeyService.Register(settings.HotkeyModifiers.Value, settings.HotkeyKey.Value);
-        };
+        // ホットキーのトグル先を MainWindow に設定（登録自体は App で完了済み）
+        _hotkeyService.Toggled = OnHotkeyToggle;
     }
 
     // ウィンドウ位置・サイズ・ピン留めの復元
@@ -256,19 +251,48 @@ public partial class MainWindow : Window
         _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(ShowFromTray);
     }
 
-    private void ShowFromTray()
+    private void HideToTray()
+    {
+        WindowState = WindowState.Minimized;
+        ShowInTaskbar = false;
+    }
+
+    public void ShowFromTray()
     {
         Show();
+        ShowInTaskbar = true;
         WindowState = WindowState.Normal;
         Activate();
+        FocusLockPasswordIfNeeded();
     }
 
     private void OnHotkeyToggle()
     {
-        if (IsVisible)
-            Hide();
-        else
+        if (!IsVisible || WindowState == WindowState.Minimized)
+        {
+            // タスクトレイから復帰
             ShowFromTray();
+        }
+        else if (!IsActive)
+        {
+            // 他のウィンドウの裏にいる → 前面に出すだけ
+            Activate();
+            FocusLockPasswordIfNeeded();
+        }
+        else
+        {
+            // 前面にいてアクティブ → タスクトレイに格納
+            HideToTray();
+        }
+    }
+
+    private void FocusLockPasswordIfNeeded()
+    {
+        if (_viewModel.IsLocked && _viewModel.HasPassword)
+        {
+            LockPasswordInput.Focus();
+            Keyboard.Focus(LockPasswordInput);
+        }
     }
 
     // 数字キー 1-9 で該当スロットのコードをコピー
@@ -326,7 +350,7 @@ public partial class MainWindow : Window
         if (!_isExiting)
         {
             e.Cancel = true;
-            Hide();
+            HideToTray();
             return;
         }
         _trayIcon?.Dispose();
@@ -492,7 +516,7 @@ public partial class MainWindow : Window
     // トレイ格納
     private void OnCloseToTrayClick(object sender, RoutedEventArgs e)
     {
-        Hide();
+        HideToTray();
     }
 
     // Exit

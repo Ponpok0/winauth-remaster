@@ -15,6 +15,7 @@ public partial class App : Application
     private const string MUTEX_NAME = "WinAuthRemaster_SingleInstance";
     private const string PIPE_NAME = "WinAuthRemaster_Activate";
     private static Mutex? _instanceMutex;
+    private readonly GlobalHotkeyService _hotkeyService = new();
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -43,11 +44,20 @@ public partial class App : Application
         var settings = settingsService.Load();
         LocalizationService.ApplyLanguage(settings.Language);
 
+        // グローバルホットキーを早期登録（PasswordDialog 表示中も有効にする）
+        _hotkeyService.Initialize();
+        if (settings.HotkeyModifiers != null && settings.HotkeyKey != null)
+            _hotkeyService.Register(settings.HotkeyModifiers.Value, settings.HotkeyKey.Value);
+
         string configPath = settingsService.GetConfigFilePath(settings);
         var configService = new ConfigService(configPath);
         var clipboardService = new ClipboardService();
         var viewModel = new MainViewModel(configService, clipboardService);
         viewModel.SetLockTimeout(settings.LockTimeoutMinutes);
+
+        // 認証ダイアログを経由した場合、ユーザーが引き出して認証を通したなら
+        // メインウィンドウは通常表示にする
+        bool startMinimized = settings.StartMinimized;
 
         if (configService.ConfigExists())
         {
@@ -57,6 +67,37 @@ public partial class App : Application
                 protection != ProtectionType.Dpapi)
             {
                 var dialog = new PasswordDialog(LocalizationService.Loc("PwTitle_WinAuth"), isSetMode: false);
+
+                // 最小化起動: PasswordDialog を最小化状態で表示
+                if (startMinimized)
+                {
+                    dialog.SourceInitialized += (_, _) =>
+                    {
+                        dialog.WindowState = WindowState.Minimized;
+                        dialog.ShowInTaskbar = false;
+                    };
+                }
+
+                // PasswordDialog 表示中のホットキーでダイアログを最小化/復帰
+                _hotkeyService.Toggled = () => Dispatcher.Invoke(() =>
+                {
+                    if (dialog.WindowState == WindowState.Minimized)
+                    {
+                        dialog.ShowInTaskbar = true;
+                        dialog.WindowState = WindowState.Normal;
+                        dialog.Activate();
+                    }
+                    else if (!dialog.IsActive)
+                    {
+                        dialog.Activate();
+                    }
+                    else
+                    {
+                        dialog.WindowState = WindowState.Minimized;
+                        dialog.ShowInTaskbar = false;
+                    }
+                });
+
                 dialog.SetAuthValidator(pw =>
                 {
                     try
@@ -72,9 +113,13 @@ public partial class App : Application
 
                 if (dialog.ShowDialog() != true)
                 {
+                    _hotkeyService.Dispose();
                     Shutdown();
                     return;
                 }
+
+                // 認証を通した時点でダイアログは表示状態 → メインウィンドウも通常表示
+                startMinimized = false;
             }
             else
             {
@@ -95,10 +140,24 @@ public partial class App : Application
             viewModel.InitEmpty();
         }
 
-        var window = new MainWindow(viewModel, settingsService, settings);
+        var window = new MainWindow(viewModel, settingsService, settings, _hotkeyService);
         MainWindow = window;
         ShutdownMode = ShutdownMode.OnMainWindowClose;
-        window.Show();
+
+        if (startMinimized)
+        {
+            // タスクトレイに格納した状態で起動
+            window.WindowState = WindowState.Minimized;
+            window.ShowInTaskbar = false;
+            window.Show();
+            window.Hide();
+            // Minimized + Hide で不可視にしつつ HWND を確立する
+            // 以後は HideToTray/ShowFromTray で制御される
+        }
+        else
+        {
+            window.Show();
+        }
     }
 
     // 別インスタンスからのアクティベート要求を Named Pipe で受信
@@ -115,11 +174,9 @@ public partial class App : Application
                     server.ReadByte();
                     Dispatcher.Invoke(() =>
                     {
-                        if (MainWindow is Window w)
+                        if (MainWindow is MainWindow w)
                         {
-                            w.Show();
-                            w.WindowState = WindowState.Normal;
-                            w.Activate();
+                            w.ShowFromTray();
                         }
                     });
                 }

@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">Effacer</s:String>
     <s:String x:Key="Settings_HotkeyHint">Appuyez sur les touches de raccourci...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Échec de l'enregistrement du raccourci. Une autre application utilise peut-être cette combinaison.</s:String>
+    <s:String x:Key="Settings_StartMinimized">Démarrer réduit dans la zone de notification</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Ajouter un authentificateur</s:String>

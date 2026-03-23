@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">साफ़ करें</s:String>
     <s:String x:Key="Settings_HotkeyHint">शॉर्टकट कुंजियाँ दबाएँ...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">हॉटकी पंजीकरण विफल। कोई अन्य ऐप इस शॉर्टकट का उपयोग कर रहा हो सकता है।</s:String>
+    <s:String x:Key="Settings_StartMinimized">ट्रे में छोटा करके शुरू करें</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">ऑथेंटिकेटर जोड़ें</s:String>

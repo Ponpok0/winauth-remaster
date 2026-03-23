@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">Löschen</s:String>
     <s:String x:Key="Settings_HotkeyHint">Tastenkombination drücken...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Hotkey-Registrierung fehlgeschlagen. Eine andere Anwendung verwendet möglicherweise diese Tastenkombination.</s:String>
+    <s:String x:Key="Settings_StartMinimized">Beim Start in den Infobereich minimieren</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Authenticator hinzufügen</s:String>

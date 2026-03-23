@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">Clear</s:String>
     <s:String x:Key="Settings_HotkeyHint">Press shortcut keys...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">Hotkey registration failed. Another app may be using this shortcut.</s:String>
+    <s:String x:Key="Settings_StartMinimized">Start minimized to tray</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">Add Authenticator</s:String>

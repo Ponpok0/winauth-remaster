@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">지우기</s:String>
     <s:String x:Key="Settings_HotkeyHint">단축키를 누르세요...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">단축키 등록에 실패했습니다. 다른 앱이 같은 단축키를 사용 중일 수 있습니다.</s:String>
+    <s:String x:Key="Settings_StartMinimized">시작 시 트레이로 최소화</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">인증기 추가</s:String>

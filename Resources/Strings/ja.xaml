@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">クリア</s:String>
     <s:String x:Key="Settings_HotkeyHint">ショートカットキーを押してください...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">ホットキーの登録に失敗しました。他のアプリが同じショートカットを使用している可能性があります。</s:String>
+    <s:String x:Key="Settings_StartMinimized">起動時にタスクトレイに格納</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">認証の追加</s:String>

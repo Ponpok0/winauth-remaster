@@ -55,6 +55,8 @@ public partial class SettingsDialog : Window
         _hotkeyKey = currentSettings.HotkeyKey;
         HotkeyInput.Text = FormatHotkey(_hotkeyModifiers, _hotkeyKey);
 
+        StartMinimizedCheck.IsChecked = currentSettings.StartMinimized;
+
         // Window レベルで PreviewKeyDown を捕捉（TextBox 単体だとイベントが届かない環境対策）
         PreviewKeyDown += OnWindowPreviewKeyDown;
 
@@ -99,7 +101,8 @@ public partial class SettingsDialog : Window
             Language = _selectedLanguage,
             WindowOpacity = OpacitySlider.Value / 100.0,
             HotkeyModifiers = _hotkeyModifiers,
-            HotkeyKey = _hotkeyKey
+            HotkeyKey = _hotkeyKey,
+            StartMinimized = StartMinimizedCheck.IsChecked == true
         };
         DialogResult = true;
     }

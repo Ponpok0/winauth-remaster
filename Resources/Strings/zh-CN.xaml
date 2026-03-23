@@ -80,6 +80,7 @@
     <s:String x:Key="Settings_HotkeyClear">清除</s:String>
     <s:String x:Key="Settings_HotkeyHint">请按快捷键...</s:String>
     <s:String x:Key="Settings_HotkeyFailed">热键注册失败。其他应用程序可能正在使用此快捷键。</s:String>
+    <s:String x:Key="Settings_StartMinimized">启动时最小化到托盘</s:String>
 
     <!-- Add authenticator dialog -->
     <s:String x:Key="Add_Title">添加验证器</s:String>
