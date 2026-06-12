@@ -8,7 +8,91 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>winauth.ico</ApplicationIcon>
+    <!-- SDK による InformationalVersion へのフルハッシュ自動付与を無効化（SetBuildVersion の short hash を使う） -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
+
+  <!-- ビルド時自動バージョニング: YYYY.MMDD.BuildNumber (+git hash) -->
+  <!-- GetAssemblyVersion を BeforeTargets に含めないとアセンブリ属性に反映されない:
+       GenerateAssemblyInfo の DependsOnTargets（GetAssemblyAttributes 等）が
+       BeforeTargets のターゲットより先に実行され、属性が旧値で確定するため -->
+  <Target Name="SetBuildVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo;CoreCompile">
+    <PropertyGroup>
+      <_BuildDate>$([System.DateTime]::Now.ToString("yyyy-MM-dd"))</_BuildDate>
+      <_VersionDate>$([System.DateTime]::Now.ToString("yyyy.MMdd"))</_VersionDate>
+      <_VersionFilePath>$(MSBuildProjectDirectory)\.build-version</_VersionFilePath>
+    </PropertyGroup>
+    <!-- インライン C# タスクでビルド番号を算出 -->
+    <ComputeBuildNumber VersionFilePath="$(_VersionFilePath)" VersionDate="$(_VersionDate)" BuildDate="$(_BuildDate)">
+      <Output TaskParameter="FullVersion" PropertyName="_ComputedVersion" />
+      <Output TaskParameter="BuildNumber" PropertyName="_ComputedBuildNumber" />
+    </ComputeBuildNumber>
+    <!-- git short hash -->
+    <Exec Command="git -C &quot;$(MSBuildProjectDirectory)&quot; rev-parse --short HEAD || echo unknown"
+          ConsoleToMSBuild="true" StandardOutputImportance="low" StandardErrorImportance="low" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitHash" />
+    </Exec>
+    <PropertyGroup>
+      <Version>$(_ComputedVersion)</Version>
+      <AssemblyVersion>$(_ComputedVersion).0</AssemblyVersion>
+      <FileVersion>$(_ComputedVersion).0</FileVersion>
+      <InformationalVersion>$(_ComputedVersion)+$(_GitHash.Trim())</InformationalVersion>
+    </PropertyGroup>
+    <!-- BuildInfo.g.cs を生成 -->
+    <PropertyGroup>
+      <_BuildInfoPath>$(IntermediateOutputPath)BuildInfo.g.cs</_BuildInfoPath>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_BuildInfoPath)" Overwrite="true" Lines="
+// &lt;auto-generated /&gt;
+namespace WinAuthRemaster%3B
+internal static class BuildInfo
+{
+    public const string Version = &quot;$(_ComputedVersion)&quot;%3B
+    public const string BuildDate = &quot;$(_BuildDate)&quot;%3B
+    public const string GitHash = &quot;$(_GitHash.Trim())&quot;%3B
+    public const string InformationalVersion = &quot;$(_ComputedVersion)+$(_GitHash.Trim())&quot;%3B
+}
+" />
+    <ItemGroup>
+      <Compile Include="$(_BuildInfoPath)" Condition="Exists('$(_BuildInfoPath)')" />
+    </ItemGroup>
+  </Target>
+
+  <!-- ビルド番号算出のインラインタスク -->
+  <UsingTask TaskName="ComputeBuildNumber" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <VersionFilePath ParameterType="System.String" Required="true" />
+      <VersionDate ParameterType="System.String" Required="true" />
+      <BuildDate ParameterType="System.String" Required="true" />
+      <FullVersion ParameterType="System.String" Output="true" />
+      <BuildNumber ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        int build = 1;
+        try
+        {
+            if (System.IO.File.Exists(VersionFilePath))
+            {
+                var prev = System.IO.File.ReadAllText(VersionFilePath).Trim();
+                // Format: YYYY.MMDD.N|YYYY-MM-DD
+                var parts = prev.Split('|');
+                if (parts.Length == 2 && parts[1] == BuildDate)
+                {
+                    var verParts = parts[0].Split('.');
+                    if (verParts.Length == 3 && int.TryParse(verParts[2], out var n))
+                        build = n + 1;
+                }
+            }
+        }
+        catch (System.Exception ex) { Log.LogWarning("Failed to read .build-version: " + ex.Message); }
+        FullVersion = VersionDate + "." + build;
+        BuildNumber = build.ToString();
+        try { System.IO.File.WriteAllText(VersionFilePath, FullVersion + "|" + BuildDate); }
+        catch (System.Exception ex) { Log.LogWarning("Failed to write .build-version: " + ex.Message); }
+      ]]></Code>
+    </Task>
+  </UsingTask>
 
 <ItemGroup>
     <Resource Include="winauth.ico" />
