@@ -200,6 +200,10 @@ public sealed class MainViewModel : ViewModelBase
 
     public void Lock()
     {
+        // パスワード未設定ならロックしない（照合対象がなく、クリックだけで
+        // 解除できる無意味なロック画面になるため）
+        if (!HasPassword) return;
+
         IsLocked = true;
         foreach (var entry in Entries)
             entry.IsCodeVisible = false;
@@ -307,7 +311,7 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var entry in Entries)
             entry.Refresh();
 
-        if (!IsLocked && _lockTimeoutMinutes > 0 && _lockMonitorSuspendCount == 0)
+        if (!IsLocked && HasPassword && _lockTimeoutMinutes > 0 && _lockMonitorSuspendCount == 0)
         {
             var elapsed = DateTime.UtcNow - _lastActivity;
             if (elapsed.TotalMinutes >= _lockTimeoutMinutes)

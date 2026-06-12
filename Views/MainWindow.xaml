@@ -70,9 +70,10 @@
                                Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Button>
 
-                <!-- Lock -->
+                <!-- Lock（パスワード未設定時は無効 — 照合対象がなくロックが成立しない） -->
                 <Button DockPanel.Dock="Right"
                         Click="OnLockClick"
+                        IsEnabled="{Binding HasPassword}"
                         Style="{StaticResource ModernButton}"
                         Padding="6,4" ToolTip="{DynamicResource Tip_Lock}" Margin="6,0,0,0">
                     <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
