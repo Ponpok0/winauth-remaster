@@ -22,6 +22,8 @@ public sealed class MainViewModel : ViewModelBase
     private bool _isLocked;
     // 0 = ロック監視無効。起動時の認証（PasswordDialog）完了後に SetLockTimeout で有効化される
     private int _lockTimeoutMinutes;
+    // 0 より大きい間はロック監視を停止する（モーダルダイアログ表示中など）。ネスト対応
+    private int _lockMonitorSuspendCount;
     private DateTime _lastActivity = DateTime.UtcNow;
     private AuthenticatorItemViewModel? _selectedEntry;
     private string _filterText = "";
@@ -135,6 +137,11 @@ public sealed class MainViewModel : ViewModelBase
         _password = password;
         OnPropertyChanged(nameof(HasPassword));
         SaveConfig();
+
+        // ロック中に保護方式が変わった場合、ロック画面の解錠 UI を現状に合わせ直す
+        // （旧モードのままだとパスワード入力欄が出ず解錠不能になる）
+        if (IsLocked)
+            LockStateChanged?.Invoke(true);
     }
 
     public void AddEntry(AuthenticatorEntry entry)
@@ -174,6 +181,21 @@ public sealed class MainViewModel : ViewModelBase
     public void ReportActivity()
     {
         _lastActivity = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// ロック監視を一時停止する（モーダルダイアログ表示中など、活動が
+    /// MainWindow に伝わらない間の誤ロック防止）。ネスト可。対で Resume を呼ぶこと。
+    /// </summary>
+    public void SuspendLockMonitor()
+    {
+        _lockMonitorSuspendCount++;
+    }
+
+    public void ResumeLockMonitor()
+    {
+        if (_lockMonitorSuspendCount > 0 && --_lockMonitorSuspendCount == 0)
+            _lastActivity = DateTime.UtcNow; // 停止中の経過時間を持ち越さない
     }
 
     public void Lock()
@@ -285,7 +307,7 @@ public sealed class MainViewModel : ViewModelBase
         foreach (var entry in Entries)
             entry.Refresh();
 
-        if (!IsLocked && _lockTimeoutMinutes > 0)
+        if (!IsLocked && _lockTimeoutMinutes > 0 && _lockMonitorSuspendCount == 0)
         {
             var elapsed = DateTime.UtcNow - _lastActivity;
             if (elapsed.TotalMinutes >= _lockTimeoutMinutes)

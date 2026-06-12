@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Windows.Interop;
 
 namespace WinAuthRemaster.Services;
@@ -59,6 +59,8 @@ public sealed class GlobalHotkeyService : IDisposable
             ComponentDispatcher.ThreadPreprocessMessage -= OnThreadMessage;
             _isHooked = false;
         }
+        // 呼び出し側がキャプチャしたウィンドウ等への参照を解放する
+        Toggled = null;
     }
 
     private void OnThreadMessage(ref MSG msg, ref bool handled)

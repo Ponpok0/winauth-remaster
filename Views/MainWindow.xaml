@@ -70,10 +70,21 @@
                                Foreground="{DynamicResource TextPrimaryBrush}"/>
                 </Button>
 
-                <!-- Left side: Hamburger menu + Add -->
-                <StackPanel Orientation="Horizontal" ClipToBounds="True">
+                <!-- Lock -->
+                <Button DockPanel.Dock="Right"
+                        Click="OnLockClick"
+                        Style="{StaticResource ModernButton}"
+                        Padding="6,4" ToolTip="{DynamicResource Tip_Lock}" Margin="6,0,0,0">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="14"
+                               Text="&#xE72E;"
+                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                </Button>
+
+                <!-- Left side: Hamburger menu + Add + フィルター
+                     （フィルターは DockPanel の充填子。Add ラベルが長い言語でも切れず縮む） -->
+                <DockPanel>
                     <!-- ハンバーガーメニュー -->
-                    <Button x:Name="HamburgerButton"
+                    <Button DockPanel.Dock="Left" x:Name="HamburgerButton"
                             Style="{StaticResource ModernButton}"
                             Click="OnHamburgerClick"
                             Padding="8,4" ToolTip="{DynamicResource Tip_Menu}">
@@ -139,11 +150,12 @@
                         </Button.ContextMenu>
                     </Button>
 
-                    <Button Content="{DynamicResource Btn_Add}" Style="{StaticResource ModernButton}"
+                    <Button DockPanel.Dock="Left" Content="{DynamicResource Btn_Add}"
+                            Style="{StaticResource ModernButton}"
                             Command="{Binding AddCommand}" Margin="4,0,0,0"/>
 
-                    <!-- フィルター -->
-                    <Grid Margin="6,0,0,0" Width="120">
+                    <!-- フィルター（残り幅を使用） -->
+                    <Grid Margin="6,0,0,0" MaxWidth="160">
                         <TextBox x:Name="FilterBox"
                                  Style="{StaticResource ModernTextBox}"
                                  Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
@@ -154,7 +166,7 @@
                                    Foreground="{DynamicResource TextMutedBrush}"
                                    VerticalAlignment="Center" Margin="5,0,0,0"/>
                     </Grid>
-                </StackPanel>
+                </DockPanel>
             </DockPanel>
         </Border>
 

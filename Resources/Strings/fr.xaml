@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">Réduire dans la zone de notification</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">Toujours au premier plan</s:String>
     <s:String x:Key="Tip_Settings">Paramètres</s:String>
+    <s:String x:Key="Tip_Lock">Verrouiller (L)</s:String>
     <s:String x:Key="Tip_Menu">Menu</s:String>
     <s:String x:Key="Tip_MoreActions">Plus d'actions</s:String>
     <s:String x:Key="Tip_ShowHideCode">Afficher / Masquer le code</s:String>

@@ -12,8 +12,11 @@ namespace WinAuthRemaster;
 
 public partial class App : Application
 {
-    private const string MUTEX_NAME = "WinAuthRemaster_SingleInstance";
-    private const string PIPE_NAME = "WinAuthRemaster_Activate";
+    // パイプ名前空間はマシングローバルのため、ユーザー SID を付与してセッション間の
+    // 衝突（別ユーザーセッションでのリスナー生成失敗）を防ぐ。Mutex も対応を揃える
+    private static readonly string USER_SID = GetCurrentUserSid();
+    private static readonly string MUTEX_NAME = "WinAuthRemaster_SingleInstance_" + USER_SID;
+    private static readonly string PIPE_NAME = "WinAuthRemaster_Activate_" + USER_SID;
     private const double MAIN_WINDOW_WIDTH = 394;
     private const double MAIN_WINDOW_INITIAL_HEIGHT = 420;
     private static Mutex? _instanceMutex;
@@ -25,14 +28,20 @@ public partial class App : Application
         _instanceMutex = new Mutex(true, MUTEX_NAME, out bool isNewInstance);
         if (!isNewInstance)
         {
-            // 既存インスタンスにアクティベート要求を送り、自身は終了
-            try
+            // スタートアップ起動（--minimized）の2重起動はサイレントに終了する
+            // （二重登録等の場合に、サイレント起動が既存インスタンスの前面化に化けるのを防ぐ）
+            if (!e.Args.Contains(StartupService.MinimizedArg))
             {
-                using var client = new NamedPipeClientStream(".", PIPE_NAME, PipeDirection.Out);
-                client.Connect(timeout: 2000);
-                client.WriteByte(1);
+                // 既存インスタンスにアクティベート要求を送り、自身は終了
+                try
+                {
+                    using var client = new NamedPipeClientStream(".", PIPE_NAME, PipeDirection.Out);
+                    client.Connect(timeout: 2000);
+                    client.WriteByte(1);
+                }
+                catch (System.IO.IOException) { /* 既存インスタンスが応答しなくても終了する */ }
+                catch (TimeoutException) { /* Connect のタイムアウト。同上 */ }
             }
-            catch (System.IO.IOException) { /* 既存インスタンスが応答しなくても終了する */ }
             Shutdown();
             return;
         }
@@ -49,17 +58,21 @@ public partial class App : Application
 
         // グローバルホットキーを早期登録（PasswordDialog 表示中も有効にする）
         _hotkeyService.Initialize();
+        bool hotkeyRegistered = false;
         if (settings.HotkeyModifiers != null && settings.HotkeyKey != null)
-            _hotkeyService.Register(settings.HotkeyModifiers.Value, settings.HotkeyKey.Value);
+            hotkeyRegistered = _hotkeyService.Register(settings.HotkeyModifiers.Value, settings.HotkeyKey.Value);
 
         string configPath = settingsService.GetConfigFilePath(settings);
         var configService = new ConfigService(configPath);
         var clipboardService = new ClipboardService();
         var viewModel = new MainViewModel(configService, clipboardService);
 
-        // 認証ダイアログを経由した場合、ユーザーが引き出して認証を通したなら
-        // メインウィンドウは通常表示にする
-        bool startMinimized = settings.StartMinimized;
+        // 旧形式（--minimized なし）のスタートアップ登録を現行形式へ移行
+        StartupService.MigrateIfOutdated();
+
+        // 最小化起動はスタートアップ起動（--minimized 付き）のみに適用する。
+        // 手動起動では設定に関わらず表示する（不可視起動だと起動の成否が判別できない）
+        bool startMinimized = settings.StartMinimized && e.Args.Contains(StartupService.MinimizedArg);
 
         if (configService.ConfigExists())
         {
@@ -68,32 +81,46 @@ public partial class App : Application
             if (protection != ProtectionType.None &&
                 protection != ProtectionType.Dpapi)
             {
-                bool hasHotkey = settings.HotkeyModifiers != null && settings.HotkeyKey != null;
+                // 登録の「成功」を条件にする: 他アプリとのキー衝突で登録に失敗した場合に
+                // ホットキー前提の不可視化（画面外退避）を行うと、復帰手段が細るため
+                bool hasHotkey = hotkeyRegistered;
                 var dialog = new PasswordDialog(LocalizationService.Loc("PwTitle_WinAuth"), isSetMode: false)
                 {
                     CanHideToTray = hasHotkey
                 };
                 RestoreWindowPosition(dialog, settings);
 
-                // 最小化起動: PasswordDialog を最小化状態で表示
+                // 最小化起動: PasswordDialog を不可視で開始
                 if (startMinimized)
                 {
-                    dialog.SourceInitialized += (_, _) =>
+                    if (hasHotkey)
                     {
-                        dialog.WindowState = WindowState.Minimized;
-                        if (hasHotkey)
-                            dialog.ShowInTaskbar = false;
-                    };
+                        // Minimized を経由しない: 透過ウィンドウ（AllowsTransparency）は
+                        // 表示前に最小化すると復元サイズが壊れ、画面左下にミニウィンドウ
+                        // として残る。Opacity=0 で初回描画を隠し、描画完了後（実位置の
+                        // 確定後）に画面外へ退避する。Hide() は ShowDialog を終了させて
+                        // しまうため使えない
+                        dialog.ShowActivated = false;
+                        dialog.ShowInTaskbar = false;
+                        dialog.Opacity = 0;
+                        dialog.HideOnFirstRender = true;
+                    }
+                    else
+                    {
+                        // ホットキーなし: タスクバーから復帰できるよう最小化で開始
+                        dialog.SourceInitialized += (_, _) =>
+                        {
+                            dialog.WindowState = WindowState.Minimized;
+                        };
+                    }
                 }
 
-                // PasswordDialog 表示中のホットキーでダイアログを最小化/復帰
+                // PasswordDialog 表示中のホットキーで非表示/復帰を切り替え
                 _hotkeyService.Toggled = () => Dispatcher.Invoke(() =>
                 {
-                    if (dialog.WindowState == WindowState.Minimized)
+                    if (dialog.IsInvisible)
                     {
-                        dialog.ShowInTaskbar = true;
-                        dialog.WindowState = WindowState.Normal;
-                        dialog.Activate();
+                        dialog.RestoreOnScreen();
                     }
                     else if (!dialog.IsActive)
                     {
@@ -101,8 +128,7 @@ public partial class App : Application
                     }
                     else
                     {
-                        dialog.WindowState = WindowState.Minimized;
-                        dialog.ShowInTaskbar = false;
+                        dialog.HideOffScreen();
                     }
                 });
 
@@ -119,7 +145,13 @@ public partial class App : Application
                     }
                 });
 
-                if (dialog.ShowDialog() != true)
+                // 認証前トレイアイコン: MainWindow のトレイアイコンは認証完了後にしか
+                // 存在しないため、最小化起動中でもアプリの存在と復帰手段をトレイで提供する
+                var preAuthTray = CreatePreAuthTrayIcon(dialog);
+                bool authenticated = dialog.ShowDialog() == true;
+                preAuthTray?.Dispose();
+
+                if (!authenticated)
                 {
                     _hotkeyService.Dispose();
                     Shutdown();
@@ -158,20 +190,53 @@ public partial class App : Application
 
         if (startMinimized)
         {
-            // SourceInitialized で最小化し、ウィンドウのフラッシュを防ぐ
-            window.SourceInitialized += (_, _) =>
-            {
-                window.WindowState = WindowState.Minimized;
-                window.ShowInTaskbar = false;
-            };
+            // Minimized を経由せず不可視で開始: 透過ウィンドウ（AllowsTransparency）は
+            // 表示前に最小化すると復元サイズが壊れ、画面左下にミニウィンドウとして残る。
+            // Opacity=0 の Show → Hide で HWND とレイアウトだけ確立する（復帰はトレイ等から）
+            window.ShowActivated = false;
+            window.ShowInTaskbar = false;
+            window.Opacity = 0;
             window.Show();
             window.Hide();
-            // Show → Hide で HWND を確立しつつ不可視にする
+            window.Opacity = 1;
+            window.ShowActivated = true;
         }
         else
         {
             window.Show();
         }
+    }
+
+    // 認証前（PasswordDialog 表示中）のトレイアイコンを作成する。
+    // 最小化起動中でもアプリの存在をトレイで可視化し、復帰・終了手段を提供する
+    private static System.Windows.Forms.NotifyIcon? CreatePreAuthTrayIcon(PasswordDialog dialog)
+    {
+        var stream = GetResourceStream(new Uri("pack://application:,,,/winauth.ico"))?.Stream;
+        if (stream == null) return null;
+
+        var trayIcon = new System.Windows.Forms.NotifyIcon
+        {
+            Icon = new System.Drawing.Icon(stream),
+            Text = "WinAuth",
+            Visible = true
+        };
+
+        var menu = new System.Windows.Forms.ContextMenuStrip();
+        menu.Items.Add(LocalizationService.Loc("Tray_Show"), null,
+            (_, _) => dialog.Dispatcher.Invoke(dialog.RestoreOnScreen));
+        menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        menu.Items.Add(LocalizationService.Loc("Tray_Exit"), null,
+            (_, _) => dialog.Dispatcher.Invoke(() => dialog.DialogResult = false));
+        trayIcon.ContextMenuStrip = menu;
+        trayIcon.DoubleClick += (_, _) => dialog.Dispatcher.Invoke(dialog.RestoreOnScreen);
+        return trayIcon;
+    }
+
+    // 現在ユーザーの SID（取得不能時はユーザー名にフォールバック）
+    private static string GetCurrentUserSid()
+    {
+        using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
+        return identity.User?.Value ?? Environment.UserName;
     }
 
     // 保存済みのウィンドウ位置を復元（PasswordDialog 等、MainWindow 以外にも適用）
@@ -221,10 +286,17 @@ public partial class App : Application
                         {
                             w.ShowFromTray();
                         }
+                        else if (Windows.OfType<PasswordDialog>().FirstOrDefault() is { } dialog)
+                        {
+                            // 認証前: 不可視待機中の PasswordDialog を前面に出す
+                            dialog.RestoreOnScreen();
+                        }
                     });
                 }
                 catch (System.IO.IOException) { break; }
                 catch (ObjectDisposedException) { break; }
+                catch (OperationCanceledException) { break; }  // シャットダウン中の Dispatcher.Invoke
+                catch (UnauthorizedAccessException) { break; } // パイプ生成のアクセス拒否
             }
         })
         {

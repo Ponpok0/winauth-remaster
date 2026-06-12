@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">最小化到托盘</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">置顶</s:String>
     <s:String x:Key="Tip_Settings">设置</s:String>
+    <s:String x:Key="Tip_Lock">锁定 (L)</s:String>
     <s:String x:Key="Tip_Menu">菜单</s:String>
     <s:String x:Key="Tip_MoreActions">更多操作</s:String>
     <s:String x:Key="Tip_ShowHideCode">显示 / 隐藏验证码</s:String>

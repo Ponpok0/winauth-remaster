@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">Свернуть в трей</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">Поверх всех окон</s:String>
     <s:String x:Key="Tip_Settings">Настройки</s:String>
+    <s:String x:Key="Tip_Lock">Заблокировать (L)</s:String>
     <s:String x:Key="Tip_Menu">Меню</s:String>
     <s:String x:Key="Tip_MoreActions">Ещё</s:String>
     <s:String x:Key="Tip_ShowHideCode">Показать / Скрыть код</s:String>

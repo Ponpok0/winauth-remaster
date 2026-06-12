@@ -1,4 +1,4 @@
-using System.Security;
+﻿using System.Security;
 using System.Windows;
 using Microsoft.Win32;
 using WinAuthRemaster.Crypto;
@@ -14,6 +14,8 @@ public partial class MainWindow
 
     private void OnImportClick(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsLocked) return;
+
         string winAuthDir = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinAuth");
         string initialDir = System.IO.Directory.Exists(winAuthDir)
@@ -28,7 +30,7 @@ public partial class MainWindow
             InitialDirectory = initialDir
         };
 
-        if (dlg.ShowDialog(this) != true) return;
+        if (ShowDialogWithLockSuspended(dlg) != true) return;
 
         try
         {
@@ -69,7 +71,7 @@ public partial class MainWindow
     private List<AuthenticatorEntry>? ImportFromXml(string filePath)
     {
         var pwDialog = new PasswordDialog(Loc("PwTitle_WinAuth"), isSetMode: false) { Owner = this };
-        if (pwDialog.ShowDialog() != true) return null;
+        if (ShowDialogWithLockSuspended(pwDialog) != true) return null;
 
         using var access = pwDialog.Password.Reveal();
         return _importService.ImportFromLegacyXml(filePath, access.Value);
@@ -90,7 +92,7 @@ public partial class MainWindow
         if (protection != ProtectionType.None)
         {
             var pwDialog = new PasswordDialog(Loc("PwTitle_FilePassword"), isSetMode: false) { Owner = this };
-            if (pwDialog.ShowDialog() != true) return null;
+            if (ShowDialogWithLockSuspended(pwDialog) != true) return null;
             password = pwDialog.Password;
         }
 
@@ -103,6 +105,8 @@ public partial class MainWindow
 
     private void OnExportClick(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsLocked) return;
+
         if (_viewModel.Entries.Count == 0)
         {
             ShowStatus(Loc("Status_NothingToExport"));
@@ -116,7 +120,7 @@ public partial class MainWindow
             DefaultExt = ".txt"
         };
 
-        if (dlg.ShowDialog(this) != true) return;
+        if (ShowDialogWithLockSuspended(dlg) != true) return;
 
         try
         {
@@ -126,7 +130,7 @@ public partial class MainWindow
             if (ext == ".json")
             {
                 var pwDialog = new PasswordDialog(Loc("PwTitle_SetExport"), isSetMode: true) { Owner = this };
-                if (pwDialog.ShowDialog() != true) return;
+                if (ShowDialogWithLockSuspended(pwDialog) != true) return;
                 using var access = pwDialog.Password.Reveal();
                 _exportService.ExportAsJson(entries, dlg.FileName, access.Value);
             }
@@ -147,8 +151,10 @@ public partial class MainWindow
 
     private void OnChangePasswordClick(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsLocked) return;
+
         var dialog = new PasswordDialog(Loc("PwTitle_SetProtection"), isSetMode: true) { Owner = this };
-        if (dialog.ShowDialog() != true) return;
+        if (ShowDialogWithLockSuspended(dialog) != true) return;
 
         var protection = dialog.Password.IsNullOrEmpty()
             ? ProtectionType.None

@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">ट्रे में छोटा करें</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">हमेशा सबसे ऊपर</s:String>
     <s:String x:Key="Tip_Settings">सेटिंग्स</s:String>
+    <s:String x:Key="Tip_Lock">लॉक करें (L)</s:String>
     <s:String x:Key="Tip_Menu">मेनू</s:String>
     <s:String x:Key="Tip_MoreActions">और विकल्प</s:String>
     <s:String x:Key="Tip_ShowHideCode">कोड दिखाएँ / छिपाएँ</s:String>

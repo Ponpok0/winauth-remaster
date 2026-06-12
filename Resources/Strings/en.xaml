@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">Minimize to tray</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">Always on top</s:String>
     <s:String x:Key="Tip_Settings">Settings</s:String>
+    <s:String x:Key="Tip_Lock">Lock (L)</s:String>
     <s:String x:Key="Tip_Menu">Menu</s:String>
     <s:String x:Key="Tip_MoreActions">More actions</s:String>
     <s:String x:Key="Tip_ShowHideCode">Show / Hide code</s:String>

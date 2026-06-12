@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">トレイに格納</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">常に最前面</s:String>
     <s:String x:Key="Tip_Settings">設定</s:String>
+    <s:String x:Key="Tip_Lock">ロック (L)</s:String>
     <s:String x:Key="Tip_Menu">メニュー</s:String>
     <s:String x:Key="Tip_MoreActions">操作</s:String>
     <s:String x:Key="Tip_ShowHideCode">コードの表示切替</s:String>

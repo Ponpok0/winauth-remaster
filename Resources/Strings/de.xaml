@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">In den Infobereich minimieren</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">Immer im Vordergrund</s:String>
     <s:String x:Key="Tip_Settings">Einstellungen</s:String>
+    <s:String x:Key="Tip_Lock">Sperren (L)</s:String>
     <s:String x:Key="Tip_Menu">Menü</s:String>
     <s:String x:Key="Tip_MoreActions">Weitere Aktionen</s:String>
     <s:String x:Key="Tip_ShowHideCode">Code ein-/ausblenden</s:String>

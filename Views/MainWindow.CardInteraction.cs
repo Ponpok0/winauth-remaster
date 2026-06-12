@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -164,7 +164,7 @@ public partial class MainWindow
     private bool OnConfirmDeleteRequested(string entryName)
     {
         var dialog = new ConfirmDeleteDialog(entryName) { Owner = this };
-        return dialog.ShowDialog() == true;
+        return ShowDialogWithLockSuspended(dialog) == true;
     }
 
     // Rename
@@ -172,7 +172,7 @@ public partial class MainWindow
     private string? OnRenameRequested(string currentName)
     {
         var dialog = new RenameDialog(currentName) { Owner = this };
-        return dialog.ShowDialog() == true ? dialog.NewName : null;
+        return ShowDialogWithLockSuspended(dialog) == true ? dialog.NewName : null;
     }
 
     // Add authenticator
@@ -180,7 +180,7 @@ public partial class MainWindow
     private Task<(string Name, string Secret, HmacAlgorithm Algorithm, int Period, int Digits)?> OnAddRequested()
     {
         var dialog = new AddAuthenticatorDialog { Owner = this };
-        if (dialog.ShowDialog() == true)
+        if (ShowDialogWithLockSuspended(dialog) == true)
         {
             return Task.FromResult<(string, string, HmacAlgorithm, int, int)?>
                 ((dialog.AuthName, dialog.Secret, dialog.Algorithm, dialog.Period, dialog.Digits));

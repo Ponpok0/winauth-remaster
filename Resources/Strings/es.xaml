@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">Minimizar a la bandeja</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">Siempre visible</s:String>
     <s:String x:Key="Tip_Settings">Configuración</s:String>
+    <s:String x:Key="Tip_Lock">Bloquear (L)</s:String>
     <s:String x:Key="Tip_Menu">Menú</s:String>
     <s:String x:Key="Tip_MoreActions">Más acciones</s:String>
     <s:String x:Key="Tip_ShowHideCode">Mostrar / Ocultar código</s:String>

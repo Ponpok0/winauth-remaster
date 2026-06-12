@@ -6,6 +6,7 @@
     <s:String x:Key="Tip_MinimizeToTray">트레이로 최소화</s:String>
     <s:String x:Key="Tip_AlwaysOnTop">항상 위에</s:String>
     <s:String x:Key="Tip_Settings">설정</s:String>
+    <s:String x:Key="Tip_Lock">잠금 (L)</s:String>
     <s:String x:Key="Tip_Menu">메뉴</s:String>
     <s:String x:Key="Tip_MoreActions">추가 작업</s:String>
     <s:String x:Key="Tip_ShowHideCode">코드 표시 / 숨기기</s:String>

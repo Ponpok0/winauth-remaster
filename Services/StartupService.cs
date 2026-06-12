@@ -11,6 +11,12 @@ public static class StartupService
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string AppName = "WinAuthRemaster";
 
+    /// <summary>
+    /// スタートアップ起動を示すコマンドライン引数。
+    /// 手動起動と区別するため、レジストリ登録コマンドにのみ付与される。
+    /// </summary>
+    public const string MinimizedArg = "--minimized";
+
     public static bool IsEnabled()
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: false);
@@ -24,13 +30,33 @@ public static class StartupService
 
         if (enable)
         {
-            string exePath = Environment.ProcessPath ?? "";
-            if (!string.IsNullOrEmpty(exePath))
-                key.SetValue(AppName, $"\"{exePath}\"");
+            string command = BuildRunCommand();
+            if (!string.IsNullOrEmpty(command))
+                key.SetValue(AppName, command);
         }
         else
         {
             key.DeleteValue(AppName, throwOnMissingValue: false);
         }
+    }
+
+    /// <summary>
+    /// 登録済みの起動コマンドが現行形式と異なる場合に再登録する
+    /// （--minimized なしの旧形式や、exe パス変更からの移行）。
+    /// </summary>
+    public static void MigrateIfOutdated()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
+        if (key?.GetValue(AppName) is not string current) return;
+
+        string expected = BuildRunCommand();
+        if (!string.IsNullOrEmpty(expected) && current != expected)
+            key.SetValue(AppName, expected);
+    }
+
+    private static string BuildRunCommand()
+    {
+        string exePath = Environment.ProcessPath ?? "";
+        return string.IsNullOrEmpty(exePath) ? "" : $"\"{exePath}\" {MinimizedArg}";
     }
 }

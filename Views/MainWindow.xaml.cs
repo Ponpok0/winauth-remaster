@@ -57,6 +57,7 @@ public partial class MainWindow : Window
         PreviewMouseMove += (_, _) => viewModel.ReportActivity();
         PreviewMouseDown += (_, _) => viewModel.ReportActivity();
         PreviewKeyDown += OnPreviewKeyDown;
+        StateChanged += OnStateChangedRestoreSize;
 
         // ドラッグ移動（トンネリングイベントで確実に捕捉）
         PreviewMouseLeftButtonDown += OnPreviewMouseLeftButtonDown;
@@ -111,12 +112,29 @@ public partial class MainWindow : Window
         }
     }
 
+    // 透過ウィンドウ（AllowsTransparency）は最小化から復元するとサイズが
+    // 壊れることがあるため、Normal 復帰時に設計範囲へ矯正する
+    private void OnStateChangedRestoreSize(object? sender, EventArgs e)
+    {
+        if (WindowState != WindowState.Normal) return;
+
+        if (Width < MinWidth)
+            Width = MinWidth;
+        if (Height < MinHeight)
+            Height = Math.Clamp(_settings.WindowHeight ?? 420, MinHeight, SystemParameters.VirtualScreenHeight);
+    }
+
     // ウィンドウ状態を設定に保存
     private void SaveWindowState()
     {
-        _settings.WindowTop = Top;
-        _settings.WindowLeft = Left;
-        _settings.WindowHeight = Height;
+        // 最小化中の Top/Left は不正値（-32000 等）になるため Normal 時のみ保存する。
+        // Hide（トレイ格納）中は最後の表示位置を保持しているので保存対象に含める
+        if (WindowState == WindowState.Normal)
+        {
+            _settings.WindowTop = Top;
+            _settings.WindowLeft = Left;
+            _settings.WindowHeight = Height;
+        }
         _settings.IsAlwaysOnTop = Topmost;
         _settingsService.Save(_settings);
     }
@@ -254,7 +272,9 @@ public partial class MainWindow : Window
 
     private void HideToTray()
     {
-        WindowState = WindowState.Minimized;
+        // Minimized + ShowInTaskbar=false は画面左下にミニウィンドウが残ることが
+        // あるため、Hide で完全に隠す（復帰はトレイ/ホットキー/名前付きパイプ経由）
+        Hide();
         ShowInTaskbar = false;
     }
 
@@ -310,6 +330,14 @@ public partial class MainWindow : Window
         if (_viewModel.IsLocked || Keyboard.Modifiers != ModifierKeys.None)
             return;
 
+        // L キーで手動ロック
+        if (e.Key == Key.L)
+        {
+            _viewModel.Lock();
+            e.Handled = true;
+            return;
+        }
+
         int slot = e.Key switch
         {
             Key.D1 => 0, Key.D2 => 1, Key.D3 => 2, Key.D4 => 3, Key.D5 => 4,
@@ -360,6 +388,11 @@ public partial class MainWindow : Window
     }
 
     // Lock / Unlock
+
+    private void OnLockClick(object sender, RoutedEventArgs e)
+    {
+        _viewModel.Lock();
+    }
 
     private void OnLockStateChanged(bool isLocked)
     {
@@ -439,6 +472,8 @@ public partial class MainWindow : Window
 
     private void OnSettingsClick(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsLocked) return;
+
         string resolvedPath = _settingsService.GetConfigFilePath(_settings);
         bool originalDarkMode = _settings.IsDarkMode;
         double originalOpacity = _settings.WindowOpacity;
@@ -452,13 +487,20 @@ public partial class MainWindow : Window
             ThemePreview = isDark => ApplyTheme(isDark, originalOpacity),
             OpacityPreview = op => ApplyTheme(_settings.IsDarkMode, op)
         };
-        if (dialog.ShowDialog() != true)
+        if (ShowDialogWithLockSuspended(dialog) != true)
         {
             ApplyTheme(originalDarkMode, originalOpacity);
             return;
         }
 
         var newSettings = dialog.Result;
+        // SettingsDialog.Result はウィンドウ位置系を持たないため現値を引き継ぐ
+        // （欠落すると設定保存のたびに保存ファイルから位置情報が消える）
+        newSettings.WindowTop = _settings.WindowTop;
+        newSettings.WindowLeft = _settings.WindowLeft;
+        newSettings.WindowHeight = _settings.WindowHeight;
+        newSettings.IsAlwaysOnTop = Topmost;
+
         string oldPath = _settingsService.GetConfigFilePath(_settings);
         string newPath = _settingsService.GetConfigFilePath(newSettings);
 
@@ -499,6 +541,22 @@ public partial class MainWindow : Window
         }
 
         ShowStatus(Loc("Status_SettingsSaved"));
+    }
+
+    // モーダルダイアログ表示中はロック監視を一時停止する
+    // （ダイアログ操作は MainWindow に活動として伝わらず、操作中でも誤ロックするため）
+    internal bool? ShowDialogWithLockSuspended(Window dialog)
+    {
+        _viewModel.SuspendLockMonitor();
+        try { return dialog.ShowDialog(); }
+        finally { _viewModel.ResumeLockMonitor(); }
+    }
+
+    internal bool? ShowDialogWithLockSuspended(Microsoft.Win32.CommonDialog dialog)
+    {
+        _viewModel.SuspendLockMonitor();
+        try { return dialog.ShowDialog(this); }
+        finally { _viewModel.ResumeLockMonitor(); }
     }
 
     // ステータスメッセージを表示し、3秒後に自動消去
