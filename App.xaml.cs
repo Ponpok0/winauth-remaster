@@ -56,7 +56,6 @@ public partial class App : Application
         var configService = new ConfigService(configPath);
         var clipboardService = new ClipboardService();
         var viewModel = new MainViewModel(configService, clipboardService);
-        viewModel.SetLockTimeout(settings.LockTimeoutMinutes);
 
         // 認証ダイアログを経由した場合、ユーザーが引き出して認証を通したなら
         // メインウィンドウは通常表示にする
@@ -148,6 +147,10 @@ public partial class App : Application
         {
             viewModel.InitEmpty();
         }
+
+        // 認証完了後に有効化する。起動画面（PasswordDialog）表示中に
+        // ロックが発動すると、ログイン直後にロック解除を再要求してしまうため
+        viewModel.SetLockTimeout(settings.LockTimeoutMinutes);
 
         var window = new MainWindow(viewModel, settingsService, settings, _hotkeyService);
         MainWindow = window;

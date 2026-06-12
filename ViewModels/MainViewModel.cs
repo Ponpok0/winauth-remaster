@@ -20,7 +20,8 @@ public sealed class MainViewModel : ViewModelBase
     private AppConfig _config;
     private SecureString? _password;
     private bool _isLocked;
-    private int _lockTimeoutMinutes = 5;
+    // 0 = ロック監視無効。起動時の認証（PasswordDialog）完了後に SetLockTimeout で有効化される
+    private int _lockTimeoutMinutes;
     private DateTime _lastActivity = DateTime.UtcNow;
     private AuthenticatorItemViewModel? _selectedEntry;
     private string _filterText = "";
@@ -166,6 +167,8 @@ public sealed class MainViewModel : ViewModelBase
     public void SetLockTimeout(int minutes)
     {
         _lockTimeoutMinutes = minutes;
+        // 設定時点から計測を開始する（起動画面での放置時間を持ち越さない）
+        _lastActivity = DateTime.UtcNow;
     }
 
     public void ReportActivity()
